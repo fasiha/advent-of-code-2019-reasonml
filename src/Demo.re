@@ -411,9 +411,27 @@ let rec range = (start, end_) =>
     Js.Array.everyi((x, i) => i > 0 ? v[i - 1] <= x : true, v);
   let hasAdjacentDuplicate = v =>
     Js.Array.somei((x, i) => i > 0 ? v[i - 1] == x : false, v);
+  let frequencyCount = v => {
+    let d = Js.Dict.empty();
+    Js.Array.forEach(
+      x => {
+        switch (Js.Dict.get(d, x)) {
+        | Some(n) => Js.Dict.set(d, x, n + 1)
+        | _ => Js.Dict.set(d, x, 1)
+        }
+      },
+      v,
+    );
+    d;
+  };
   let okPassword = (n: int) => {
     let s = string_of_int(n) |> Js.String.split("");
-    isAscending(s) && hasAdjacentDuplicate(s);
+    isAscending(s)
+    && hasAdjacentDuplicate(s)
+    && s
+    |> frequencyCount
+    |> Js.Dict.values
+    |> Js.Array.some(i => i == 2);
   };
   // this recursive definition is really inferior to lazy-sequence...
   let rec seacher = (n, max, nfound) => {
@@ -422,10 +440,5 @@ let rec range = (start, end_) =>
     | _ => seacher(n + 1, max, nfound + (okPassword(n) ? 1 : 0))
     };
   };
-  Js.log(
-    "122345,111111,223450,123789"
-    |> Js.String.split(",")
-    |> Js.Array.map(x => okPassword(int_of_string(x))),
-  );
-  Js.log(("answer4a", seacher(min, max, 0)));
+  Js.log(("answer4b", seacher(min, max, 0)));
 };
