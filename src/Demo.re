@@ -366,10 +366,10 @@ let rec range = (start, end_) =>
   // let a = Bigarray.Array2.create(Bigarray.Float32, Bigarray.C_layout, 10, 10);
   let str_of_int_tuple = ((nx, ny)) =>
     string_of_int(nx) ++ "," ++ string_of_int(ny);
-  let planStep = (prev, curr) => {
-    let (x, y) = prev;
-    let direction = Js.String.get(curr, 0);
-    let steps = int_of_string(Js.String.sliceToEnd(~from=1, curr));
+  let planStep = (prevPos, instruction) => {
+    let (x, y) = prevPos;
+    let direction = Js.String.get(instruction, 0);
+    let steps = int_of_string(Js.String.sliceToEnd(~from=1, instruction));
     let (dx, dy) =
       switch (direction) {
       | "R" => (1, 0)
@@ -380,47 +380,45 @@ let rec range = (start, end_) =>
       };
     ((dx, dy), (x + dx * steps, y + dy * steps), steps);
   };
-  let updateArr = ((x, y), curr, arr) => {
-    let ((dx, dy), next, steps) = planStep((x, y), curr);
+  let updateArr = ((prevPos, prevLength), instruction, arr) => {
+    let (x, y) = prevPos;
+    let ((dx, dy), next, steps) = planStep(prevPos, instruction);
     for (i in 1 to steps) {
-      Js.Dict.set(arr, str_of_int_tuple((x + dx * i, y + dy * i)), 1);
+      let key = str_of_int_tuple((x + dx * i, y + dy * i));
+      switch (Js.Dict.get(arr, key)) {
+      | None => Js.Dict.set(arr, key, prevLength + i)
+      | _ => ()
+      };
     };
-    next;
+    (next, prevLength + steps);
   };
-  let _ =
-    Js.Array.reduce(
-      (prev, curr) => updateArr(prev, curr, arr),
-      (0, 0),
-      Js.String.split(",", path1),
-    );
-
-  let checkArr = ((x, y), curr, arr, crossings) => {
-    let ((dx, dy), next, steps) = planStep((x, y), curr);
-    let newCrossings =
-      steps
-      |> range(0)
-      |> List.map(i => (x + dx * i, y + dy * i))
-      |> List.filter(next =>
-           switch (Js.Dict.get(arr, str_of_int_tuple(next))) {
-           | Some(_) => true
-           | _ => false
-           }
-         );
-    (next, crossings @ newCrossings);
+  let makeMap = path => {
+    let arr = Js.Dict.empty();
+    let _ =
+      Js.Array.reduce(
+        (prev, curr) => updateArr(prev, curr, arr),
+        ((0, 0), 0),
+        Js.String.split(",", path),
+      );
+    arr;
   };
-  let (_, crossings) =
-    Js.Array.reduce(
-      ((prevLoc, crossings), curr) =>
-        checkArr(prevLoc, curr, arr, crossings),
-      ((0, 0), []),
-      Js.String.split(",", path2),
-    );
-  Js.log(("crossings", Array.of_list(crossings)));
-
-  let manhattan = ((x, y)) => Js.Math.abs_int(x) + Js.Math.abs_int(y);
-
-  let answer3 =
-    List.sort((x, y) => manhattan(x) - manhattan(y), crossings)
-    |> List.map(manhattan);
-  Js.log(("answer3a", List.hd(answer3)));
+  let arr1 = makeMap(path1);
+  let arr2 = makeMap(path2);
+  let answers3b =
+    arr1
+    |> Js.Dict.keys
+    |> Js.Array.filter(key1 =>
+         switch (Js.Dict.get(arr2, key1)) {
+         | Some(_) => true
+         | _ => false
+         }
+       )
+    |> Js.Array.map(k =>
+         switch (Js.Dict.get(arr1, k), Js.Dict.get(arr2, k)) {
+         | (Some(v1), Some(v2)) => v1 + v2
+         | _ => 99999
+         }
+       );
+  Array.sort((a, b) => a - b, answers3b);
+  Js.log(("answer3b", answers3b));
 };
