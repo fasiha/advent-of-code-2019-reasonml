@@ -403,3 +403,29 @@ let rec range = (start, end_) =>
   Array.sort((a, b) => a - b, answers3b);
   Js.log(("answer3b", answers3b));
 };
+
+{
+  let min = 183564;
+  let max = 657474;
+  let isAscending = v =>
+    Js.Array.everyi((x, i) => i > 0 ? v[i - 1] <= x : true, v);
+  let hasAdjacentDuplicate = v =>
+    Js.Array.somei((x, i) => i > 0 ? v[i - 1] == x : false, v);
+  let okPassword = (n: int) => {
+    let s = string_of_int(n) |> Js.String.split("");
+    isAscending(s) && hasAdjacentDuplicate(s);
+  };
+  // this recursive definition is really inferior to lazy-sequence...
+  let rec seacher = (n, max, nfound) => {
+    switch (n) {
+    | x when x > max => nfound
+    | _ => seacher(n + 1, max, nfound + (okPassword(n) ? 1 : 0))
+    };
+  };
+  Js.log(
+    "122345,111111,223450,123789"
+    |> Js.String.split(",")
+    |> Js.Array.map(x => okPassword(int_of_string(x))),
+  );
+  Js.log(("answer4a", seacher(min, max, 0)));
+};
