@@ -79,6 +79,26 @@ object Main extends App {
     input2(2) = 2
     val answer2a = intcode(input2)(0)
     assert(answer2a == 4576384)
-  }
 
+    (0 to 99).foreach(noun => {
+      (0 to 99).foreach(verb => {
+        input2(1) = noun
+        input2(2) = verb
+        if (intcode(input2)(0) == 19690720)
+          println("noun=" + noun + ", verb=" + verb)
+      })
+    })
+
+    val nounVerb = (0 to 99)
+      .flatMap(noun => (0 to 99).map(verb => (noun, verb)))
+      .find(tup => {
+        val (noun, verb) = tup
+        input2(1) = noun
+        input2(2) = verb
+        intcode(input2)(0) == 19690720
+      })
+    val ans2b = nounVerb map (tup => 100 * tup._1 + tup._2)
+    assert(ans2b == Some(5398))
+
+  }
 }
