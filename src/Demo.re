@@ -1,3 +1,5 @@
+// Start build with `npm run start`, then run with `node src/Demo.bs.js`
+
 let naiveMassToFuel = x => max(0, x / 3 - 2);
 Js.log(Array.of_list(List.map(naiveMassToFuel, [12, 14, 1969, 100756])));
 
