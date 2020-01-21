@@ -171,4 +171,24 @@ object Main extends App {
       assert(answer3b == 14746)
     }
   }
+
+  // Via https://stackoverflow.com/a/33329136/500207
+  def isSorted[T](s: Seq[T])(implicit ord: Ordering[T]): Boolean = s match {
+    case Seq()  => true
+    case Seq(_) => true
+    case _      => s.sliding(2).forall { case Seq(x, y) => ord.lteq(x, y) }
+  }
+
+  val okPassword = (x: Int) => {
+    val arr = x.toString().toCharArray()
+    isSorted(arr) && arr.sliding(2).exists(a => a(0) == a(1))
+  }
+  val enumeratePasswords = (min: Int, max: Int) =>
+    (min to max).filter(okPassword).length
+
+  {
+    val ans4a = enumeratePasswords(183564, 657474)
+    assert(ans4a == 1610)
+  }
+
 }
