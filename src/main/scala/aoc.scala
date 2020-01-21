@@ -179,16 +179,42 @@ object Main extends App {
     case _      => s.sliding(2).forall { case Seq(x, y) => ord.lteq(x, y) }
   }
 
-  val okPassword = (x: Int) => {
+  val okPasswordA = (x: Int) => {
     val arr = x.toString().toCharArray()
     isSorted(arr) && arr.sliding(2).exists(a => a(0) == a(1))
   }
-  val enumeratePasswords = (min: Int, max: Int) =>
-    (min to max).filter(okPassword).length
+
+  // This is a hyper-optimized search, in the spirit of Boyer-Moore search, in that it can skip 2
+  // characters instead of just one. I'm happy Scala can handle this kind of tight loop.
+  def onlyTwoAdjacent(arr: Array[Char]): Boolean = {
+    var i = 0;
+    var found = false
+    while (!found && i < arr.length) {
+      val oneBeforeOk = (i - 1 < 0 || arr(i - 1) != arr(i))
+      val oneOverOk = (((i + 1) < arr.length) && arr(i) == arr(i + 1))
+      val twoOverOk = (((i + 2) >= arr.length) || arr(i) != arr(i + 2))
+      found = oneBeforeOk && oneOverOk && twoOverOk
+      // following only matters if `found == false`
+      if (!oneOverOk) {
+        i += 1
+      } else {
+        i += 2
+      }
+    }
+    found
+  }
+  val okPasswordB = (x: Int) => {
+    val arr = x.toString().toCharArray()
+    isSorted(arr) && onlyTwoAdjacent(arr)
+  }
+  val enumeratePasswords = (min: Int, max: Int, pred: Int => Boolean) =>
+    (min to max).filter(pred).length
 
   {
-    val ans4a = enumeratePasswords(183564, 657474)
+    val ans4a = enumeratePasswords(183564, 657474, okPasswordA)
+    val ans4b = enumeratePasswords(183564, 657474, okPasswordB)
     assert(ans4a == 1610)
+    assert(ans4b == 1104)
   }
 
 }
