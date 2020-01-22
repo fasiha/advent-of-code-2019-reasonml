@@ -268,6 +268,7 @@ object Main extends App {
           val arg1 = if (m1 == 1) program(pc + 1) else program(program(pc + 1))
           val arg2 = if (m2 == 1) program(pc + 2) else program(program(pc + 2))
           if ((op == 5 && arg1 != 0) || (op == 6 && arg1 == 0)) pc = arg2
+          else pc += 3
         }
         case _ => ()
       }
@@ -325,14 +326,9 @@ object Main extends App {
       223, 4, 223, 99, 226)
     val (_, answer5a) = intcode5(prog, 1)
     println(("ans5a", answer5a))
-
     assert(answer5a == Some(7157989))
-    val (_, t) = intcode5(
-      Array(3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9),
-      -28
-    )
-    println(("test", t))
-    // val (_, answer5b) = intcode5(prog, 5)
-    // println(("ans5b", answer5b))
+
+    val (_, answer5b) = intcode5(prog, 5)
+    assert(answer5b == Some(7873292))
   }
 }
