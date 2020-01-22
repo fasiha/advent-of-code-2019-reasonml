@@ -237,13 +237,24 @@ object Main extends App {
       // opcode 2: mul
       // opcode 3: save input to 1pos
       // opcode 4: save 1pos to output
+      // opcode 5: jump-if-true: set pc to 2arg if 1arg is non-zero
+      // opcode 6: jump-if-false: set pc to 2arg if 1arg is zero
+      // opcode 7: <: set 3arg to 1 if 1arg<2arg, otherwise 0
+      // opcode 8: =: set 3arg to 1 if 1arg=2arg, otherwise 0
       // mode m1-m3: 0=position, 1=immediate
       opcode match {
-        case op if op == 1 || op == 2 => {
+        case op if op <= 2 || op == 7 || op == 8 => {
+          val outIdx = 3
           val arg1 = if (m1 == 1) program(pc + 1) else program(program(pc + 1))
           val arg2 = if (m2 == 1) program(pc + 2) else program(program(pc + 2))
-          program(program(pc + 3)) = if (op == 1) arg1 + arg2 else arg1 * arg2
-          pc += 4
+          // program(program(pc + outIdx)) = if (op == 1) arg1 + arg2 else arg1 * arg2
+          program(program(pc + outIdx)) = op match {
+            case 1 => arg1 + arg2
+            case 2 => arg1 * arg2
+            case 7 => if (arg1 < arg2) 1 else 0
+            case 8 => if (arg1 == arg2) 1 else 0
+          }
+          pc += (outIdx + 1)
         }
         case 3 => {
           program(program(pc + 1)) = input
@@ -252,6 +263,11 @@ object Main extends App {
         case 4 => {
           output = Some(program(program(pc + 1)))
           pc += 2
+        }
+        case op if op == 5 || op == 6 => {
+          val arg1 = if (m1 == 1) program(pc + 1) else program(program(pc + 1))
+          val arg2 = if (m2 == 1) program(pc + 2) else program(program(pc + 2))
+          if ((op == 5 && arg1 != 0) || (op == 6 && arg1 == 0)) pc = arg2
         }
         case _ => ()
       }
@@ -308,7 +324,15 @@ object Main extends App {
       223, 8, 677, 226, 224, 1002, 223, 2, 223, 1006, 224, 674, 1001, 223, 1,
       223, 4, 223, 99, 226)
     val (_, answer5a) = intcode5(prog, 1)
-    println(answer5a)
+    println(("ans5a", answer5a))
+
     assert(answer5a == Some(7157989))
+    val (_, t) = intcode5(
+      Array(3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9),
+      -28
+    )
+    println(("test", t))
+    // val (_, answer5b) = intcode5(prog, 5)
+    // println(("ans5b", answer5b))
   }
 }
