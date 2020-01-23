@@ -2,6 +2,8 @@
 
 package me.aldebrn.aoc19
 
+import scala.io.Source
+
 object Main extends App {
   def massToFuel(i: Int) = scala.math.max(0, i / 3 - 2)
 
@@ -210,12 +212,7 @@ object Main extends App {
   val enumeratePasswords = (min: Int, max: Int, pred: Int => Boolean) =>
     (min to max).filter(pred).length
 
-  {
-    val ans4a = enumeratePasswords(183564, 657474, okPasswordA)
-    val ans4b = enumeratePasswords(183564, 657474, okPasswordB)
-    assert(ans4a == 1610)
-    assert(ans4b == 1104)
-  }
+  // ans4a and 4b moved to bottom since they are slow
 
   def parseOpcode(i: Int) = {
     // does Scala expose a divmod function for simultaneously getting `i%100` and `i/100`?
@@ -332,11 +329,19 @@ object Main extends App {
     assert(answer5b == Some(7873292))
   }
 
-  def parseOrbitMap(s: String) = {
+  def parseOrbitMap(
+      s: String
+  ): (Map[String, List[String]], Map[String, String], Set[String]) = {
+    parseOrbitMap(s.split("\n"))
+  }
+
+  def parseOrbitMap(
+      arr: Array[String]
+  ): (Map[String, List[String]], Map[String, String], Set[String]) = {
     var bigToSmall: Map[String, List[String]] = Map() // parent->children
     var smallToBig: Map[String, String] = Map() // child->parent
     var smallest: Set[String] = Set() // leaf nodes
-    s.split("\n")
+    arr
       .map(s => s.split("\\)"))
       .foreach(tup => {
         smallToBig += (tup(1) -> tup(0))
@@ -369,9 +374,7 @@ object Main extends App {
     val cache = collection.mutable.Map[String, Int]()
     def cachedDistanceToRoot(node: String) =
       cache.getOrElseUpdate(node, distanceToRoot(smallToBig, node))
-    smallToBig.keysIterator
-      .map(small => cachedDistanceToRoot(small))
-      .sum
+    smallToBig.keysIterator.map(small => cachedDistanceToRoot(small)).sum
   }
 
   {
@@ -388,12 +391,25 @@ J)K
 K)L
 """)
     val (bigToSmall, smallToBig, smallest) = parseOrbitMap(inputs)
-    println((bigToSmall, smallToBig, smallest))
-    Array("B", "D", "L", "COM").map(node =>
-      println(("distance to " + node, distanceToRoot(smallToBig, node)))
-    )
-    println(("naive", naiveTotalOrbits(smallToBig)))
-    println(("smart", totalOrbits(smallToBig)))
-
+    assert(42 == naiveTotalOrbits(smallToBig))
+    assert(42 == totalOrbits(smallToBig))
   }
+  {
+    val (bigToSmall, smallToBig, smallest) = parseOrbitMap(
+      Source
+        .fromInputStream(getClass.getResourceAsStream("/input.6.txt"))
+        .getLines
+        .toArray
+    )
+    assert(224901 == naiveTotalOrbits(smallToBig))
+    assert(224901 == totalOrbits(smallToBig))
+  }
+
+  {
+    val ans4a = enumeratePasswords(183564, 657474, okPasswordA)
+    val ans4b = enumeratePasswords(183564, 657474, okPasswordB)
+    assert(ans4a == 1610)
+    assert(ans4b == 1104)
+  }
+
 }
