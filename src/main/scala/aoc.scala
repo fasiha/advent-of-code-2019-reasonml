@@ -295,6 +295,7 @@ object Main extends App {
     var smallToBig: Map[String, String] = Map() // child->parent
     var smallest: Set[String] = Set() // leaf nodes
     arr
+      .filter(s => s.length > 0)
       .map(s => s.split("\\)"))
       .foreach(tup => {
         smallToBig += (tup(1) -> tup(0))
@@ -330,6 +331,33 @@ object Main extends App {
     smallToBig.keysIterator.map(small => cachedDistanceToRoot(small)).sum
   }
 
+  def pathToRoot(
+      smallToBig: Map[String, String],
+      start: String,
+      path: collection.mutable.Queue[String] =
+        collection.mutable.Queue[String]()
+  ): collection.mutable.Queue[String] = smallToBig.get(start) match {
+    case None         => path
+    case Some(parent) => pathToRoot(smallToBig, parent, path.enqueue(parent))
+  }
+
+  def countOrbitalTransfers(
+      smallToBig: Map[String, String],
+      src: String,
+      dest: String
+  ) = {
+    val destQ = pathToRoot(smallToBig, dest)
+    val srcQ = pathToRoot(smallToBig, src)
+
+    val intersection = {
+      val destSet = destQ.toSet
+      srcQ.find(n => destSet.contains(n))
+    }.getOrElse("")
+
+    srcQ.takeWhile(node => node != intersection).length +
+      destQ.takeWhile(node => node != intersection).length
+  }
+
   {
     val inputs = ("""COM)B
 B)C
@@ -346,6 +374,13 @@ K)L
     val (bigToSmall, smallToBig, smallest) = parseOrbitMap(inputs)
     assert(42 == naiveTotalOrbits(smallToBig))
     assert(42 == totalOrbits(smallToBig))
+
+    {
+      val newInputs = inputs + "K)YOU\nI)SAN"
+      val (bigToSmall, smallToBig, smallest) = parseOrbitMap(newInputs)
+      assert(4 == countOrbitalTransfers(smallToBig, "YOU", "SAN"))
+    }
+
   }
   {
     val (bigToSmall, smallToBig, smallest) = parseOrbitMap(
@@ -354,8 +389,11 @@ K)L
         .getLines
         .toArray
     )
+    // answer 6a
     assert(224901 == naiveTotalOrbits(smallToBig))
     assert(224901 == totalOrbits(smallToBig))
+    // answer 6b
+    assert(334 == countOrbitalTransfers(smallToBig, "YOU", "SAN"))
   }
 
   {
