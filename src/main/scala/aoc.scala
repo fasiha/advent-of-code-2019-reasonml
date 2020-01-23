@@ -331,4 +331,69 @@ object Main extends App {
     val (_, answer5b) = intcode5(prog, 5)
     assert(answer5b == Some(7873292))
   }
+
+  def parseOrbitMap(s: String) = {
+    var bigToSmall: Map[String, List[String]] = Map() // parent->children
+    var smallToBig: Map[String, String] = Map() // child->parent
+    var smallest: Set[String] = Set() // leaf nodes
+    s.split("\n")
+      .map(s => s.split("\\)"))
+      .foreach(tup => {
+        smallToBig += (tup(1) -> tup(0))
+        bigToSmall += (tup(0) -> (tup(1) :: bigToSmall
+          .getOrElse(tup(0), List[String]())))
+
+        smallest -= tup(0)
+        if (!bigToSmall.contains(tup(1))) smallest += tup(1)
+      })
+    (bigToSmall, smallToBig, smallest)
+  }
+
+  def distanceToRoot(
+      smallToBig: Map[String, String],
+      node: String,
+      distance: Int = 0
+  ): Int = {
+    smallToBig.get(node) match {
+      case None         => distance
+      case Some(parent) => distanceToRoot(smallToBig, parent, distance + 1)
+    }
+  }
+
+  def naiveTotalOrbits(smallToBig: Map[String, String]): Int =
+    smallToBig.keysIterator
+      .map(small => distanceToRoot(smallToBig, small, 0))
+      .sum
+
+  def totalOrbits(smallToBig: Map[String, String]): Int = {
+    val cache = collection.mutable.Map[String, Int]()
+    def cachedDistanceToRoot(node: String) =
+      cache.getOrElseUpdate(node, distanceToRoot(smallToBig, node))
+    smallToBig.keysIterator
+      .map(small => cachedDistanceToRoot(small))
+      .sum
+  }
+
+  {
+    val inputs = ("""COM)B
+B)C
+C)D
+D)E
+E)F
+B)G
+G)H
+D)I
+E)J
+J)K
+K)L
+""")
+    val (bigToSmall, smallToBig, smallest) = parseOrbitMap(inputs)
+    println((bigToSmall, smallToBig, smallest))
+    Array("B", "D", "L", "COM").map(node =>
+      println(("distance to " + node, distanceToRoot(smallToBig, node)))
+    )
+    println(("naive", naiveTotalOrbits(smallToBig)))
+    println(("smart", totalOrbits(smallToBig)))
+
+  }
 }
