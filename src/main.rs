@@ -1,13 +1,10 @@
 // Invoke as `cargo run` from top-level repo
 
 use core::marker::Copy;
-use std::cmp::max;
-use std::cmp::Ord;
+use std::cmp::{max, Ord};
 use std::convert::From;
 use std::fs;
-use std::ops::Add;
-use std::ops::Div;
-use std::ops::Sub;
+use std::ops::{Add, Div, Sub};
 
 fn mass_to_fuel_i64(mass: i64) -> i64 {
     max(0, mass / 3 - 2)
