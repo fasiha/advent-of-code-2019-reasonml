@@ -31,6 +31,22 @@ where
     ret
 }
 
+fn intcode(v: &mut Vec<i32>) {
+    let mut pc: usize = 0;
+    while v[pc] != 99 {
+        match v[pc] {
+            1 | 2 => {
+                let a = v[v[pc + 1] as usize];
+                let b = v[v[pc + 2] as usize];
+                let d = v[pc + 3 as usize] as usize;
+                v[d] = if v[pc] == 1 { a + b } else { a * b };
+                pc += 4;
+            }
+            _ => {}
+        }
+    }
+}
+
 fn main() {
     assert_eq!(2, mass_to_fuel_i64(12));
     assert_eq!(2, mass_to_fuel(12));
@@ -41,7 +57,7 @@ fn main() {
     let input1: Vec<i32> = fs::read_to_string(String::from("input.1.txt"))
         .expect("Something went wrong reading the file")
         .split_ascii_whitespace()
-        .map(|s| s.parse().expect("Please type a number!"))
+        .map(|s| s.parse().expect("failed to parse"))
         .collect();
     let answer1a = input1
         .iter()
@@ -60,6 +76,31 @@ fn main() {
         .map(|x| mass_to_total_fuel(x))
         .fold(0, |acc, x: i32| acc + x);
     assert_eq!(5077155, answer1b);
+
+    {
+        let mut short_program: Vec<i32> = vec![1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50];
+        intcode(&mut short_program);
+        assert_eq!(
+            &short_program,
+            &[3500, 9, 10, 70, 2, 3, 11, 0, 99, 30, 40, 50]
+        );
+    }
+    {
+        let mut short_program: Vec<i32> = vec![1, 1, 1, 4, 99, 5, 6, 0, 99];
+        intcode(&mut short_program);
+        assert_eq!(&short_program, &[30, 1, 1, 4, 2, 5, 6, 0, 99]);
+    }
+    if let Some(s) = fs::read_to_string(String::from("input.2.txt"))
+        .expect("read error")
+        .lines()
+        .next()
+    {
+        let mut program: Vec<i32> = s.split(',').map(|s| s.parse().expect("parseerr")).collect();
+        program[1] = 12;
+        program[2] = 2;
+        intcode(&mut program);
+        assert_eq!(4576384, program[0]);
+    }
 
     println!("Yay!");
 }
