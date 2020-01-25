@@ -95,11 +95,32 @@ fn main() {
         .lines()
         .next()
     {
-        let mut program: Vec<i32> = s.split(',').map(|s| s.parse().expect("parseerr")).collect();
-        program[1] = 12;
-        program[2] = 2;
-        intcode(&mut program);
-        assert_eq!(4576384, program[0]);
+        let program: Vec<i32> = s.split(',').map(|s| s.parse().expect("parseerr")).collect();
+        {
+            let mut copy = program.clone();
+            copy[1] = 12;
+            copy[2] = 2;
+            intcode(&mut copy);
+            assert_eq!(4576384, copy[0]);
+        }
+        let (noun, verb) = {
+            let mut tuple = (-1i32, -2i32);
+            'outer: for noun in 0i32..99 {
+                for verb in 0i32..99 {
+                    let mut copy = program.clone();
+                    copy[1] = noun;
+                    copy[2] = verb;
+                    intcode(&mut copy);
+                    if copy[0] == 19690720 {
+                        tuple.0 = noun;
+                        tuple.1 = verb;
+                        break 'outer;
+                    }
+                }
+            }
+            tuple
+        };
+        assert_eq!(5398, 100 * noun + verb);
     }
 
     println!("Yay!");
