@@ -2,6 +2,7 @@
 
 use core::marker::Copy;
 use std::cmp::{max, Ord};
+use std::collections::HashMap;
 use std::convert::From;
 use std::fs;
 use std::ops::{Add, Div, Sub};
@@ -45,6 +46,59 @@ fn intcode(v: &mut Vec<i32>) {
             _ => {}
         }
     }
+}
+
+type PathMap = HashMap<(i32, i32), i32>;
+fn string_to_pathmap(path1: &str) -> PathMap {
+    let mut dict: PathMap = HashMap::new();
+    let mut x = 0i32;
+    let mut y = 0i32;
+    let mut len = 0;
+    for s in path1.split(',') {
+        let step: i32 = s[1..].parse().expect("parse err");
+        match s.as_bytes()[0] {
+            b'L' => {
+                for i in 1..step {
+                    dict.insert((x - i, y), len + i);
+                }
+                x -= step;
+            }
+            b'R' => {
+                for i in 1..step {
+                    dict.insert((x + i, y), len + i);
+                }
+                x += step;
+            }
+            b'U' => {
+                for i in 1..step {
+                    dict.insert((x, y + i), len + i);
+                }
+                y += step;
+            }
+            b'D' => {
+                for i in 1..step {
+                    dict.insert((x, y - i), len + i);
+                }
+                y -= step;
+            }
+            _ => {}
+        };
+        len += step;
+    }
+    dict
+}
+// I initially wrote this to take an actual PathMap instead of a reference,
+// but that'd move the map here, and it'd be unavaialble to the caller afterwards.
+fn lowest_manhattan(m1: &PathMap, m2: &PathMap) -> Option<i32> {
+    m1.keys()
+        .filter_map(|xy| {
+            if m2.contains_key(xy) {
+                Some((xy.0).abs() + xy.1.abs())
+            } else {
+                None
+            }
+        })
+        .min()
 }
 
 fn main() {
@@ -121,6 +175,45 @@ fn main() {
             tuple
         };
         assert_eq!(5398, 100 * noun + verb);
+    }
+
+    {
+        let path1 = String::from("R8,U5,L5,D3");
+        let m1 = string_to_pathmap(&path1);
+        assert_eq!(
+            Some(6),
+            lowest_manhattan(&m1, &string_to_pathmap("U7,R6,D4,L4"))
+        );
+        assert_eq!(
+            Some(159),
+            lowest_manhattan(
+                &string_to_pathmap("R75,D30,R83,U83,L12,D49,R71,U7,L72"),
+                &string_to_pathmap("U62,R66,U55,R34,D71,R55,D58,R83")
+            )
+        );
+        assert_eq!(
+            Some(135),
+            lowest_manhattan(
+                &string_to_pathmap("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51"),
+                &string_to_pathmap("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7")
+            )
+        );
+        let input3: Vec<PathMap> = fs::read_to_string(String::from("input.3.txt"))
+            .expect("Something went wrong reading the file")
+            .split_ascii_whitespace()
+            .take(2)
+            .map(string_to_pathmap)
+            .collect();
+        assert_eq!(Some(375), lowest_manhattan(&input3[0], &input3[1]));
+        {
+            // alternative:
+            let fid = fs::read_to_string(String::from("input.3.txt"))
+                .expect("Something went wrong reading the file");
+            let mut lines3 = fid.lines();
+            let p1 = string_to_pathmap(lines3.next().expect("no first line"));
+            let p2 = string_to_pathmap(lines3.next().expect("no second line"));
+            assert_eq!(Some(375), lowest_manhattan(&p1, &p2));
+        }
     }
 
     println!("Yay!");
