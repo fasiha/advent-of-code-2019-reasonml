@@ -184,26 +184,23 @@ fn main() {
     {
         let path1 = String::from("R8,U5,L5,D3");
         let m1 = string_to_pathmap(&path1);
-        assert_eq!(
-            Some(6),
-            best_intersection(&m1, &string_to_pathmap("U7,R6,D4,L4"), true)
-        );
-        assert_eq!(
-            Some(159),
-            best_intersection(
-                &string_to_pathmap("R75,D30,R83,U83,L12,D49,R71,U7,L72"),
-                &string_to_pathmap("U62,R66,U55,R34,D71,R55,D58,R83"),
-                true
-            )
-        );
-        assert_eq!(
-            Some(135),
-            best_intersection(
-                &string_to_pathmap("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51"),
-                &string_to_pathmap("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7"),
-                true
-            )
-        );
+        let m2 = string_to_pathmap("U7,R6,D4,L4");
+        assert_eq!(Some(6), best_intersection(&m1, &m2, true));
+        assert_eq!(Some(30), best_intersection(&m1, &m2, false));
+    }
+    {
+        let m1 = string_to_pathmap("R75,D30,R83,U83,L12,D49,R71,U7,L72");
+        let m2 = string_to_pathmap("U62,R66,U55,R34,D71,R55,D58,R83");
+        assert_eq!(Some(159), best_intersection(&m1, &m2, true));
+        assert_eq!(Some(610), best_intersection(&m1, &m2, false));
+    }
+    {
+        let m1 = string_to_pathmap("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51");
+        let m2 = string_to_pathmap("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7");
+        assert_eq!(Some(135), best_intersection(&m1, &m2, true));
+        assert_eq!(Some(410), best_intersection(&m1, &m2, false));
+    }
+    {
         let input3: Vec<PathMap> = fs::read_to_string(String::from("input.3.txt"))
             .expect("Something went wrong reading the file")
             .split_ascii_whitespace()
