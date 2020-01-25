@@ -89,11 +89,15 @@ fn string_to_pathmap(path1: &str) -> PathMap {
 }
 // I initially wrote this to take an actual PathMap instead of a reference,
 // but that'd move the map here, and it'd be unavaialble to the caller afterwards.
-fn lowest_manhattan(m1: &PathMap, m2: &PathMap) -> Option<i32> {
+fn best_intersection(m1: &PathMap, m2: &PathMap, manhattan: bool) -> Option<i32> {
     m1.keys()
         .filter_map(|xy| {
             if m2.contains_key(xy) {
-                Some((xy.0).abs() + xy.1.abs())
+                Some(if manhattan {
+                    (xy.0).abs() + xy.1.abs()
+                } else {
+                    m1.get(xy).unwrap_or(&0) + m2.get(xy).unwrap_or(&0)
+                })
             } else {
                 None
             }
@@ -182,20 +186,22 @@ fn main() {
         let m1 = string_to_pathmap(&path1);
         assert_eq!(
             Some(6),
-            lowest_manhattan(&m1, &string_to_pathmap("U7,R6,D4,L4"))
+            best_intersection(&m1, &string_to_pathmap("U7,R6,D4,L4"), true)
         );
         assert_eq!(
             Some(159),
-            lowest_manhattan(
+            best_intersection(
                 &string_to_pathmap("R75,D30,R83,U83,L12,D49,R71,U7,L72"),
-                &string_to_pathmap("U62,R66,U55,R34,D71,R55,D58,R83")
+                &string_to_pathmap("U62,R66,U55,R34,D71,R55,D58,R83"),
+                true
             )
         );
         assert_eq!(
             Some(135),
-            lowest_manhattan(
+            best_intersection(
                 &string_to_pathmap("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51"),
-                &string_to_pathmap("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7")
+                &string_to_pathmap("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7"),
+                true
             )
         );
         let input3: Vec<PathMap> = fs::read_to_string(String::from("input.3.txt"))
@@ -204,7 +210,11 @@ fn main() {
             .take(2)
             .map(string_to_pathmap)
             .collect();
-        assert_eq!(Some(375), lowest_manhattan(&input3[0], &input3[1]));
+        assert_eq!(Some(375), best_intersection(&input3[0], &input3[1], true));
+        assert_eq!(
+            Some(14746),
+            best_intersection(&input3[0], &input3[1], false)
+        );
         {
             // alternative:
             let fid = fs::read_to_string(String::from("input.3.txt"))
@@ -212,7 +222,7 @@ fn main() {
             let mut lines3 = fid.lines();
             let p1 = string_to_pathmap(lines3.next().expect("no first line"));
             let p2 = string_to_pathmap(lines3.next().expect("no second line"));
-            assert_eq!(Some(375), lowest_manhattan(&p1, &p2));
+            assert_eq!(Some(375), best_intersection(&p1, &p2, true));
         }
     }
 
