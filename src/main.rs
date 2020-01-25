@@ -106,122 +106,125 @@ fn best_intersection(m1: &PathMap, m2: &PathMap, manhattan: bool) -> Option<i32>
 }
 
 fn main() {
-    assert_eq!(2, mass_to_fuel_i64(12));
-    assert_eq!(2, mass_to_fuel(12));
-    assert_eq!(2, mass_to_fuel(14));
-    assert_eq!(654, mass_to_fuel(1969));
-    assert_eq!(33583, mass_to_fuel(100756));
+    {
+        assert_eq!(2, mass_to_fuel_i64(12));
+        assert_eq!(2, mass_to_fuel(12));
+        assert_eq!(2, mass_to_fuel(14));
+        assert_eq!(654, mass_to_fuel(1969));
+        assert_eq!(33583, mass_to_fuel(100756));
 
-    let input1: Vec<i32> = fs::read_to_string(String::from("input.1.txt"))
-        .expect("Something went wrong reading the file")
-        .split_ascii_whitespace()
-        .map(|s| s.parse().expect("failed to parse"))
-        .collect();
-    let answer1a = input1
-        .iter()
-        .copied()
-        .map(|x| mass_to_fuel(x))
-        .fold(0, |acc, x: i32| acc + x);
-    assert_eq!(3386686, answer1a);
-
-    assert_eq!(2, mass_to_total_fuel(12));
-    assert_eq!(2, mass_to_total_fuel(14));
-    assert_eq!(966, mass_to_total_fuel(1969));
-    assert_eq!(50346, mass_to_total_fuel(100756));
-
-    let answer1b = input1
-        .into_iter() // moves the Vec!
-        .map(|x| mass_to_total_fuel(x))
-        .fold(0, |acc, x: i32| acc + x);
-    assert_eq!(5077155, answer1b);
-
-    {
-        let mut short_program: Vec<i32> = vec![1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50];
-        intcode(&mut short_program);
-        assert_eq!(
-            &short_program,
-            &[3500, 9, 10, 70, 2, 3, 11, 0, 99, 30, 40, 50]
-        );
-    }
-    {
-        let mut short_program: Vec<i32> = vec![1, 1, 1, 4, 99, 5, 6, 0, 99];
-        intcode(&mut short_program);
-        assert_eq!(&short_program, &[30, 1, 1, 4, 2, 5, 6, 0, 99]);
-    }
-    if let Some(s) = fs::read_to_string(String::from("input.2.txt"))
-        .expect("read error")
-        .lines()
-        .next()
-    {
-        let program: Vec<i32> = s.split(',').map(|s| s.parse().expect("parseerr")).collect();
-        {
-            let mut copy = program.clone();
-            copy[1] = 12;
-            copy[2] = 2;
-            intcode(&mut copy);
-            assert_eq!(4576384, copy[0]);
-        }
-        let (noun, verb) = {
-            let mut tuple = (-1i32, -2i32);
-            'outer: for noun in 0i32..99 {
-                for verb in 0i32..99 {
-                    let mut copy = program.clone();
-                    copy[1] = noun;
-                    copy[2] = verb;
-                    intcode(&mut copy);
-                    if copy[0] == 19690720 {
-                        tuple.0 = noun;
-                        tuple.1 = verb;
-                        break 'outer;
-                    }
-                }
-            }
-            tuple
-        };
-        assert_eq!(5398, 100 * noun + verb);
-    }
-
-    {
-        let path1 = String::from("R8,U5,L5,D3");
-        let m1 = string_to_pathmap(&path1);
-        let m2 = string_to_pathmap("U7,R6,D4,L4");
-        assert_eq!(Some(6), best_intersection(&m1, &m2, true));
-        assert_eq!(Some(30), best_intersection(&m1, &m2, false));
-    }
-    {
-        let m1 = string_to_pathmap("R75,D30,R83,U83,L12,D49,R71,U7,L72");
-        let m2 = string_to_pathmap("U62,R66,U55,R34,D71,R55,D58,R83");
-        assert_eq!(Some(159), best_intersection(&m1, &m2, true));
-        assert_eq!(Some(610), best_intersection(&m1, &m2, false));
-    }
-    {
-        let m1 = string_to_pathmap("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51");
-        let m2 = string_to_pathmap("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7");
-        assert_eq!(Some(135), best_intersection(&m1, &m2, true));
-        assert_eq!(Some(410), best_intersection(&m1, &m2, false));
-    }
-    {
-        let input3: Vec<PathMap> = fs::read_to_string(String::from("input.3.txt"))
+        let input1: Vec<i32> = fs::read_to_string(String::from("input.1.txt"))
             .expect("Something went wrong reading the file")
             .split_ascii_whitespace()
-            .take(2)
-            .map(string_to_pathmap)
+            .map(|s| s.parse().expect("failed to parse"))
             .collect();
-        assert_eq!(Some(375), best_intersection(&input3[0], &input3[1], true));
-        assert_eq!(
-            Some(14746),
-            best_intersection(&input3[0], &input3[1], false)
-        );
+        let answer1a = input1
+            .iter()
+            .copied()
+            .map(|x| mass_to_fuel(x))
+            .fold(0, |acc, x: i32| acc + x);
+        assert_eq!(3386686, answer1a);
+        //
+        assert_eq!(2, mass_to_total_fuel(12));
+        assert_eq!(2, mass_to_total_fuel(14));
+        assert_eq!(966, mass_to_total_fuel(1969));
+        assert_eq!(50346, mass_to_total_fuel(100756));
+
+        let answer1b = input1
+            .into_iter() // moves the Vec!
+            .map(|x| mass_to_total_fuel(x))
+            .fold(0, |acc, x: i32| acc + x);
+        assert_eq!(5077155, answer1b);
+    }
+    {
         {
-            // alternative:
-            let fid = fs::read_to_string(String::from("input.3.txt"))
-                .expect("Something went wrong reading the file");
-            let mut lines3 = fid.lines();
-            let p1 = string_to_pathmap(lines3.next().expect("no first line"));
-            let p2 = string_to_pathmap(lines3.next().expect("no second line"));
-            assert_eq!(Some(375), best_intersection(&p1, &p2, true));
+            let mut short_program: Vec<i32> = vec![1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50];
+            intcode(&mut short_program);
+            assert_eq!(
+                &short_program,
+                &[3500, 9, 10, 70, 2, 3, 11, 0, 99, 30, 40, 50]
+            );
+        }
+        {
+            let mut short_program: Vec<i32> = vec![1, 1, 1, 4, 99, 5, 6, 0, 99];
+            intcode(&mut short_program);
+            assert_eq!(&short_program, &[30, 1, 1, 4, 2, 5, 6, 0, 99]);
+        }
+        if let Some(s) = fs::read_to_string(String::from("input.2.txt"))
+            .expect("read error")
+            .lines()
+            .next()
+        {
+            let program: Vec<i32> = s.split(',').map(|s| s.parse().expect("parseerr")).collect();
+            {
+                let mut copy = program.clone();
+                copy[1] = 12;
+                copy[2] = 2;
+                intcode(&mut copy);
+                assert_eq!(4576384, copy[0]);
+            }
+            let (noun, verb) = {
+                let mut tuple = (-1i32, -2i32);
+                'outer: for noun in 0i32..99 {
+                    for verb in 0i32..99 {
+                        let mut copy = program.clone();
+                        copy[1] = noun;
+                        copy[2] = verb;
+                        intcode(&mut copy);
+                        if copy[0] == 19690720 {
+                            tuple.0 = noun;
+                            tuple.1 = verb;
+                            break 'outer;
+                        }
+                    }
+                }
+                tuple
+            };
+            assert_eq!(5398, 100 * noun + verb);
         }
     }
-
+    {
+        {
+            let path1 = String::from("R8,U5,L5,D3");
+            let m1 = string_to_pathmap(&path1);
+            let m2 = string_to_pathmap("U7,R6,D4,L4");
+            assert_eq!(Some(6), best_intersection(&m1, &m2, true));
+            assert_eq!(Some(30), best_intersection(&m1, &m2, false));
+        }
+        {
+            let m1 = string_to_pathmap("R75,D30,R83,U83,L12,D49,R71,U7,L72");
+            let m2 = string_to_pathmap("U62,R66,U55,R34,D71,R55,D58,R83");
+            assert_eq!(Some(159), best_intersection(&m1, &m2, true));
+            assert_eq!(Some(610), best_intersection(&m1, &m2, false));
+        }
+        {
+            let m1 = string_to_pathmap("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51");
+            let m2 = string_to_pathmap("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7");
+            assert_eq!(Some(135), best_intersection(&m1, &m2, true));
+            assert_eq!(Some(410), best_intersection(&m1, &m2, false));
+        }
+        {
+            let input3: Vec<PathMap> = fs::read_to_string(String::from("input.3.txt"))
+                .expect("Something went wrong reading the file")
+                .split_ascii_whitespace()
+                .take(2)
+                .map(string_to_pathmap)
+                .collect();
+            assert_eq!(Some(375), best_intersection(&input3[0], &input3[1], true));
+            assert_eq!(
+                Some(14746),
+                best_intersection(&input3[0], &input3[1], false)
+            );
+            {
+                // alternative:
+                let fid = fs::read_to_string(String::from("input.3.txt"))
+                    .expect("Something went wrong reading the file");
+                let mut lines3 = fid.lines();
+                let p1 = string_to_pathmap(lines3.next().expect("no first line"));
+                let p2 = string_to_pathmap(lines3.next().expect("no second line"));
+                assert_eq!(Some(375), best_intersection(&p1, &p2, true));
+            }
+        }
+    }
     println!("Yay!");
 }
