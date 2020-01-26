@@ -205,6 +205,39 @@ fn ok_password_arithmetic_b(n: i32) -> bool {
         && (d1 <= d2 && d2 <= d3 && d3 <= d4 && d4 <= d5 && d5 <= d6);
 }
 
+type StringToString = HashMap<String, String>;
+fn distance_to_root(small_to_big: &StringToString, node: &str) -> i32 {
+    let mut ret = 0i32;
+    let mut next = node;
+    loop {
+        match small_to_big.get(next) {
+            Some(parent) => {
+                next = parent;
+                ret += 1;
+            }
+            _ => {
+                break;
+            }
+        }
+    }
+    ret
+}
+fn total_orbits_naive(small_to_big: &StringToString) -> i32 {
+    small_to_big
+        .keys()
+        .map(|k| distance_to_root(&small_to_big, k))
+        .sum()
+}
+fn parse_orbit_map(s: &str) -> StringToString {
+    let mut small_to_big: StringToString = HashMap::new();
+    for line in s.trim_end().lines() {
+        let mut it = line.split(')');
+        let (big, small) = (it.next().unwrap(), it.next().unwrap());
+        small_to_big.insert(String::from(small), String::from(big));
+    }
+    small_to_big
+}
+
 fn main() {
     {
         assert_eq!(2, mass_to_fuel_i64(12));
@@ -391,6 +424,18 @@ fn main() {
                 let output = intcode_5(&mut copy, 5);
                 assert_eq!(Some(7873292), output);
             }
+        }
+    }
+    {
+        {
+            let s = "COM)B\nB)C\nC)D\nD)E\nE)F\nB)G\nG)H\nD)I\nE)J\nJ)K\nK)L";
+            let small_to_big = parse_orbit_map(s);
+            assert_eq!(42, total_orbits_naive(&small_to_big));
+        }
+        {
+            let s = fs::read_to_string(String::from("input.6.txt")).expect("read error");
+            let small_to_big = parse_orbit_map(&s);
+            assert_eq!(224901, total_orbits_naive(&small_to_big));
         }
     }
     println!("Yay!");
