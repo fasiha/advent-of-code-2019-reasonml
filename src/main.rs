@@ -106,7 +106,7 @@ fn best_intersection(m1: &PathMap, m2: &PathMap, manhattan: bool) -> Option<i32>
         .min()
 }
 
-fn ok_password(n: i32) -> bool {
+fn ok_password_a(n: i32) -> bool {
     let s = n.to_string();
     let bytes = s.as_bytes();
     let mut monotonic = true;
@@ -120,7 +120,7 @@ fn ok_password(n: i32) -> bool {
     }
     monotonic && two_adjacent
 }
-fn ok_password_arithmetic(n: i32) -> bool {
+fn ok_password_arithmetic_a(n: i32) -> bool {
     let d6 = n % 10;
     let d5 = (n / 10) % 10;
     let d4 = (n / 100) % 10;
@@ -131,11 +131,25 @@ fn ok_password_arithmetic(n: i32) -> bool {
     return (d1 == d2 || d2 == d3 || d3 == d4 || d4 == d5 || d5 == d6)
         && (d1 <= d2 && d2 <= d3 && d3 <= d4 && d4 <= d5 && d5 <= d6);
 }
-
-fn ok_password_window(n: i32) -> bool {
+fn ok_password_window_a(n: i32) -> bool {
     let s = n.to_string();
     let bytes = s.as_bytes();
     bytes.windows(2).all(|c| c[0] <= c[1]) && bytes.windows(2).any(|c| c[0] == c[1])
+}
+fn ok_password_arithmetic_b(n: i32) -> bool {
+    let d6 = n % 10;
+    let d5 = (n / 10) % 10;
+    let d4 = (n / 100) % 10;
+    let d3 = (n / 1_000) % 10;
+    let d2 = (n / 10_000) % 10;
+    let d1 = (n / 100_000) % 10;
+    // d1 d2 d3 d4 d5 d6
+    return ((d1 == d2 && d2 != d3)
+        || (d1 != d2 && d2 == d3 && d3 != d4)
+        || (d2 != d3 && d3 == d4 && d4 != d5)
+        || (d3 != d4 && d4 == d5 && d5 != d6)
+        || (d4 != d5 && d5 == d6))
+        && (d1 <= d2 && d2 <= d3 && d3 <= d4 && d4 <= d5 && d5 <= d6);
 }
 
 fn main() {
@@ -260,17 +274,17 @@ fn main() {
         }
     }
     {
-        assert_eq!(true, ok_password(111111));
-        assert_eq!(true, ok_password_window(111111));
-        assert_eq!(false, ok_password(223450));
-        assert_eq!(false, ok_password_window(223450));
-        assert_eq!(false, ok_password(123789));
-        assert_eq!(false, ok_password_window(123789));
+        assert_eq!(true, ok_password_a(111111));
+        assert_eq!(true, ok_password_window_a(111111));
+        assert_eq!(false, ok_password_a(223450));
+        assert_eq!(false, ok_password_window_a(223450));
+        assert_eq!(false, ok_password_a(123789));
+        assert_eq!(false, ok_password_window_a(123789));
 
         {
             let r = 183564i32..657474;
             let now = SystemTime::now();
-            let res = r.fold(0, |acc, n: i32| acc + i32::from(ok_password_window(n)));
+            let res = r.fold(0, |acc, n: i32| acc + i32::from(ok_password_window_a(n)));
             let elapsed = now.elapsed();
             assert_eq!(1610, res);
             println!("{:?} s elapsed", elapsed.unwrap().as_secs_f64());
@@ -278,9 +292,21 @@ fn main() {
         {
             let r = 183564i32..657474;
             let now = SystemTime::now();
-            let res = r.fold(0, |acc, n: i32| acc + i32::from(ok_password_arithmetic(n)));
+            let res = r.fold(0, |acc, n: i32| {
+                acc + i32::from(ok_password_arithmetic_a(n))
+            });
             let elapsed = now.elapsed();
             assert_eq!(1610, res);
+            println!("{:?} s elapsed", elapsed.unwrap().as_secs_f64());
+        }
+        {
+            let r = 183564i32..657474;
+            let now = SystemTime::now();
+            let res = r.fold(0, |acc, n: i32| {
+                acc + i32::from(ok_password_arithmetic_b(n))
+            });
+            let elapsed = now.elapsed();
+            assert_eq!(1104, res);
             println!("{:?} s elapsed", elapsed.unwrap().as_secs_f64());
         }
     }
