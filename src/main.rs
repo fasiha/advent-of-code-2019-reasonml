@@ -205,26 +205,16 @@ fn ok_password_arithmetic_b(n: i32) -> bool {
         && (d1 <= d2 && d2 <= d3 && d3 <= d4 && d4 <= d5 && d5 <= d6);
 }
 
-fn distance_to_root(small_to_big: &HashMap<&str, &str>, node: &str) -> i32 {
-    let mut ret = 0i32;
-    let mut next = node;
-    loop {
-        match small_to_big.get(next) {
-            Some(parent) => {
-                next = parent;
-                ret += 1;
-            }
-            _ => {
-                break;
-            }
-        }
+fn distance_to_root(small_to_big: &HashMap<&str, &str>, node: &str, count: i32) -> i32 {
+    match small_to_big.get(node) {
+        Some(parent) => distance_to_root(small_to_big, parent, count + 1),
+        _ => count,
     }
-    ret
 }
 fn total_orbits_naive(small_to_big: &HashMap<&str, &str>) -> i32 {
     small_to_big
         .keys()
-        .map(|k| distance_to_root(&small_to_big, k))
+        .map(|k| distance_to_root(&small_to_big, k, 0))
         .sum()
 }
 fn parse_orbit_map(s: &str) -> HashMap<&str, &str> {
