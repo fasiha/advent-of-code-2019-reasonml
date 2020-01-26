@@ -49,6 +49,53 @@ fn intcode(v: &mut Vec<i32>) {
     }
 }
 
+fn parse_opcode(i: i32) -> (i32, bool, bool, bool) {
+    let opcode = i % 100;
+    let mode1 = (i / 100) % 10;
+    let mode2 = (i / 1000) % 10;
+    let mode3 = (i / 10000) % 10;
+    (opcode, mode1 == 1, mode2 == 1, mode3 == 1)
+}
+fn intcode_5(v: &mut Vec<i32>, input: i32) -> Option<i32> {
+    let mut output: Option<i32> = None;
+    let mut pc: usize = 0;
+    while v[pc] != 99 {
+        let (opcode, mode1, mode2, _mode3) = parse_opcode(v[pc]);
+        match opcode {
+            1 | 2 => {
+                let a = if mode1 {
+                    v[pc + 1]
+                } else {
+                    v[v[pc + 1] as usize]
+                };
+                let b = if mode2 {
+                    v[pc + 2]
+                } else {
+                    v[v[pc + 2] as usize]
+                };
+                let dest = v[pc + 3] as usize;
+                v[dest] = if opcode == 1 { a + b } else { a * b };
+                pc += 4;
+            }
+            3 => {
+                let dest = v[pc + 1] as usize;
+                v[dest] = input;
+                pc += 2;
+            }
+            4 => {
+                let src = v[pc + 1] as usize; // no immediate mode?
+                output = Some(v[src]);
+                pc += 2;
+            }
+            _ => {
+                println!("??? pc={}, full={}, op={}", pc, v[pc], opcode);
+                panic!("unknown op code");
+            }
+        }
+    }
+    output
+}
+
 type PathMap = HashMap<(i32, i32), i32>;
 fn string_to_pathmap(path1: &str) -> PathMap {
     let mut dict: PathMap = HashMap::new();
@@ -308,6 +355,29 @@ fn main() {
             let elapsed = now.elapsed();
             assert_eq!(1104, res);
             println!("{:?} s elapsed", elapsed.unwrap().as_secs_f64());
+        }
+    }
+    {
+        {
+            let mut short = vec![1002, 4, 3, 4, 33i32];
+            let _output = intcode_5(&mut short, 0);
+            assert_eq!(short, vec![1002, 4, 3, 4, 99i32]);
+        }
+        {
+            let mut short = vec![1101, 100, -1, 4, 0i32];
+            let _output = intcode_5(&mut short, 0);
+            assert_eq!(short, vec![1101, 100, -1, 4, 99i32]);
+        }
+        if let Some(s) = fs::read_to_string(String::from("input.5.txt"))
+            .expect("read error")
+            .lines()
+            .next()
+        {
+            let program: Vec<i32> = s.split(',').map(|s| s.parse().expect("parseerr")).collect();
+            let mut copy = program.clone();
+            let output = intcode_5(&mut copy, 1);
+            // println!("output {:?}", output);
+            assert_eq!(Some(7157989), output);
         }
     }
     println!("Yay!");
