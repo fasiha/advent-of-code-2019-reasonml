@@ -205,18 +205,44 @@ fn ok_password_arithmetic_b(n: i32) -> bool {
         && (d1 <= d2 && d2 <= d3 && d3 <= d4 && d4 <= d5 && d5 <= d6);
 }
 
-fn distance_to_root(small_to_big: &HashMap<&str, &str>, node: &str, count: i32) -> i32 {
+fn distance_to_root_naive(small_to_big: &HashMap<&str, &str>, node: &str, count: i32) -> i32 {
     match small_to_big.get(node) {
-        Some(parent) => distance_to_root(small_to_big, parent, count + 1),
+        Some(parent) => distance_to_root_naive(small_to_big, parent, count + 1),
         _ => count,
     }
 }
 fn total_orbits_naive(small_to_big: &HashMap<&str, &str>) -> i32 {
     small_to_big
         .keys()
-        .map(|k| distance_to_root(&small_to_big, k, 0))
+        .map(|k| distance_to_root_naive(&small_to_big, k, 0))
         .sum()
 }
+
+fn distance_to_root<'a>(
+    small_to_big: &'a HashMap<&str, &str>,
+    node: &'a str,
+    memo: &mut HashMap<&'a str, i32>,
+) -> i32 {
+    match memo.get(node) {
+        Some(hit) => *hit,
+        _ => {
+            let ret = match small_to_big.get(node) {
+                Some(parent) => distance_to_root(small_to_big, parent, memo) + 1,
+                _ => 0,
+            };
+            memo.insert(node, ret);
+            ret
+        }
+    }
+}
+fn total_orbits(small_to_big: &HashMap<&str, &str>) -> i32 {
+    let mut memo: HashMap<&str, i32> = HashMap::new();
+    small_to_big
+        .keys()
+        .map(|k| distance_to_root(&small_to_big, k, &mut memo))
+        .sum()
+}
+
 fn parse_orbit_map(s: &str) -> HashMap<&str, &str> {
     let mut small_to_big: HashMap<&str, &str> = HashMap::new();
     for line in s.trim_end().lines() {
@@ -419,12 +445,26 @@ fn main() {
         {
             let s = "COM)B\nB)C\nC)D\nD)E\nE)F\nB)G\nG)H\nD)I\nE)J\nJ)K\nK)L";
             let small_to_big = parse_orbit_map(s);
-            assert_eq!(42, total_orbits_naive(&small_to_big));
+            assert_eq!(42, total_orbits(&small_to_big));
         }
         {
             let s = fs::read_to_string(String::from("input.6.txt")).expect("read error");
             let small_to_big = parse_orbit_map(&s);
-            assert_eq!(224901, total_orbits_naive(&small_to_big));
+
+            {
+                let now = SystemTime::now();
+                let ret = total_orbits(&small_to_big);
+                let elapsed = now.elapsed();
+                println!("{:?} s elapsed (memoized)", elapsed.unwrap().as_secs_f64());
+                assert_eq!(224901, ret);
+            }
+            {
+                let now = SystemTime::now();
+                let ret = total_orbits_naive(&small_to_big);
+                let elapsed = now.elapsed();
+                println!("{:?} s elapsed (naive)", elapsed.unwrap().as_secs_f64());
+                assert_eq!(224901, ret);
+            }
         }
     }
     println!("Yay!");
