@@ -60,21 +60,19 @@ fn intcode_5(v: &mut Vec<i32>, input: i32) -> Option<i32> {
     let mut output: Option<i32> = None;
     let mut pc: usize = 0;
     while v[pc] != 99 {
-        let (opcode, mode1, mode2, _mode3) = parse_opcode(v[pc]);
+        let (opcode, m1, m2, _mode3) = parse_opcode(v[pc]);
         match opcode {
-            1 | 2 => {
-                let a = if mode1 {
-                    v[pc + 1]
-                } else {
-                    v[v[pc + 1] as usize]
-                };
-                let b = if mode2 {
-                    v[pc + 2]
-                } else {
-                    v[v[pc + 2] as usize]
-                };
+            1 | 2 | 7 | 8 => {
+                let a = if m1 { v[pc + 1] } else { v[v[pc + 1] as usize] };
+                let b = if m2 { v[pc + 2] } else { v[v[pc + 2] as usize] };
                 let dest = v[pc + 3] as usize;
-                v[dest] = if opcode == 1 { a + b } else { a * b };
+                v[dest] = match opcode {
+                    1 => a + b,
+                    2 => a * b,
+                    7 => (a < b) as i32,
+                    8 => (a == b) as i32,
+                    _ => -1,
+                };
                 pc += 4;
             }
             3 => {
@@ -87,9 +85,17 @@ fn intcode_5(v: &mut Vec<i32>, input: i32) -> Option<i32> {
                 output = Some(v[src]);
                 pc += 2;
             }
+            5 | 6 => {
+                let a = if m1 { v[pc + 1] } else { v[v[pc + 1] as usize] };
+                let b = if m2 { v[pc + 2] } else { v[v[pc + 2] as usize] };
+                pc = if (opcode == 5 && a != 0) || (opcode == 6 && a == 0) {
+                    b as usize
+                } else {
+                    pc + 3
+                };
+            }
             _ => {
-                println!("??? pc={}, full={}, op={}", pc, v[pc], opcode);
-                panic!("unknown op code");
+                panic!("unknown op code! pc={}, full={}, op={}", pc, v[pc], opcode);
             }
         }
     }
@@ -374,10 +380,17 @@ fn main() {
             .next()
         {
             let program: Vec<i32> = s.split(',').map(|s| s.parse().expect("parseerr")).collect();
-            let mut copy = program.clone();
-            let output = intcode_5(&mut copy, 1);
-            // println!("output {:?}", output);
-            assert_eq!(Some(7157989), output);
+
+            {
+                let mut copy = program.clone();
+                let output = intcode_5(&mut copy, 1);
+                assert_eq!(Some(7157989), output);
+            }
+            {
+                let mut copy = program.clone();
+                let output = intcode_5(&mut copy, 5);
+                assert_eq!(Some(7873292), output);
+            }
         }
     }
     println!("Yay!");
