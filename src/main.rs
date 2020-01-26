@@ -205,8 +205,7 @@ fn ok_password_arithmetic_b(n: i32) -> bool {
         && (d1 <= d2 && d2 <= d3 && d3 <= d4 && d4 <= d5 && d5 <= d6);
 }
 
-type StringToString = HashMap<String, String>;
-fn distance_to_root(small_to_big: &StringToString, node: &str) -> i32 {
+fn distance_to_root(small_to_big: &HashMap<&str, &str>, node: &str) -> i32 {
     let mut ret = 0i32;
     let mut next = node;
     loop {
@@ -222,18 +221,18 @@ fn distance_to_root(small_to_big: &StringToString, node: &str) -> i32 {
     }
     ret
 }
-fn total_orbits_naive(small_to_big: &StringToString) -> i32 {
+fn total_orbits_naive(small_to_big: &HashMap<&str, &str>) -> i32 {
     small_to_big
         .keys()
         .map(|k| distance_to_root(&small_to_big, k))
         .sum()
 }
-fn parse_orbit_map(s: &str) -> StringToString {
-    let mut small_to_big: StringToString = HashMap::new();
+fn parse_orbit_map(s: &str) -> HashMap<&str, &str> {
+    let mut small_to_big: HashMap<&str, &str> = HashMap::new();
     for line in s.trim_end().lines() {
         let mut it = line.split(')');
         let (big, small) = (it.next().unwrap(), it.next().unwrap());
-        small_to_big.insert(String::from(small), String::from(big));
+        small_to_big.insert(small, big);
     }
     small_to_big
 }
