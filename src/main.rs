@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::fs;
 use std::ops::{Add, Div, Sub};
+use std::time::SystemTime;
 
 fn mass_to_fuel_i64(mass: i64) -> i64 {
     max(0, mass / 3 - 2)
@@ -103,6 +104,38 @@ fn best_intersection(m1: &PathMap, m2: &PathMap, manhattan: bool) -> Option<i32>
             }
         })
         .min()
+}
+
+fn ok_password(n: i32) -> bool {
+    let s = n.to_string();
+    let bytes = s.as_bytes();
+    let mut monotonic = true;
+    let mut two_adjacent = false;
+    for i in 1usize..bytes.len() {
+        monotonic = bytes[i - 1] <= bytes[i];
+        two_adjacent |= bytes[i - 1] == bytes[i];
+        if !monotonic {
+            return false;
+        }
+    }
+    monotonic && two_adjacent
+}
+fn ok_password_arithmetic(n: i32) -> bool {
+    let d6 = n % 10;
+    let d5 = (n / 10) % 10;
+    let d4 = (n / 100) % 10;
+    let d3 = (n / 1_000) % 10;
+    let d2 = (n / 10_000) % 10;
+    let d1 = (n / 100_000) % 10;
+    // d1 d2 d3 d4 d5 d6
+    return (d1 == d2 || d2 == d3 || d3 == d4 || d4 == d5 || d5 == d6)
+        && (d1 <= d2 && d2 <= d3 && d3 <= d4 && d4 <= d5 && d5 <= d6);
+}
+
+fn ok_password_window(n: i32) -> bool {
+    let s = n.to_string();
+    let bytes = s.as_bytes();
+    bytes.windows(2).all(|c| c[0] <= c[1]) && bytes.windows(2).any(|c| c[0] == c[1])
 }
 
 fn main() {
@@ -224,6 +257,31 @@ fn main() {
                 let p2 = string_to_pathmap(lines3.next().expect("no second line"));
                 assert_eq!(Some(375), best_intersection(&p1, &p2, true));
             }
+        }
+    }
+    {
+        assert_eq!(true, ok_password(111111));
+        assert_eq!(true, ok_password_window(111111));
+        assert_eq!(false, ok_password(223450));
+        assert_eq!(false, ok_password_window(223450));
+        assert_eq!(false, ok_password(123789));
+        assert_eq!(false, ok_password_window(123789));
+
+        {
+            let r = 183564i32..657474;
+            let now = SystemTime::now();
+            let res = r.fold(0, |acc, n: i32| acc + i32::from(ok_password_window(n)));
+            let elapsed = now.elapsed();
+            assert_eq!(1610, res);
+            println!("{:?} s elapsed", elapsed.unwrap().as_secs_f64());
+        }
+        {
+            let r = 183564i32..657474;
+            let now = SystemTime::now();
+            let res = r.fold(0, |acc, n: i32| acc + i32::from(ok_password_arithmetic(n)));
+            let elapsed = now.elapsed();
+            assert_eq!(1610, res);
+            println!("{:?} s elapsed", elapsed.unwrap().as_secs_f64());
         }
     }
     println!("Yay!");
